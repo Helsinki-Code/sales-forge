@@ -1,8 +1,8 @@
 export function vercelAuthorizationUrl(state: string, redirectUri: string) {
-  const clientId = process.env.VERCEL_CLIENT_ID;
-  const slug = process.env.VERCEL_INTEGRATION_SLUG;
-  if (!clientId) throw new Error("VERCEL_CLIENT_ID is required");
-  if (!slug) throw new Error("VERCEL_INTEGRATION_SLUG is required");
+  const clientId = process.env.SEOFORGE_VERCEL_CLIENT_ID;
+  const slug = process.env.SEOFORGE_VERCEL_INTEGRATION_SLUG;
+  if (!clientId) throw new Error("SEOFORGE_VERCEL_CLIENT_ID is required");
+  if (!slug) throw new Error("SEOFORGE_VERCEL_INTEGRATION_SLUG is required");
   const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, state });
   return `https://vercel.com/integrations/${encodeURIComponent(slug)}/new?${params}`;
 }
@@ -10,7 +10,7 @@ export function vercelAuthorizationUrl(state: string, redirectUri: string) {
 export async function exchangeVercelCode(code: string, redirectUri: string) {
   const response = await fetch("https://api.vercel.com/v2/oauth/access_token", {
     method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ client_id: process.env.VERCEL_CLIENT_ID, client_secret: process.env.VERCEL_CLIENT_SECRET, code, redirect_uri: redirectUri }),
+    body: JSON.stringify({ client_id: process.env.SEOFORGE_VERCEL_CLIENT_ID, client_secret: process.env.SEOFORGE_VERCEL_CLIENT_SECRET, code, redirect_uri: redirectUri }),
   });
   if (!response.ok) throw new Error(`Vercel OAuth failed (${response.status})`);
   return response.json() as Promise<{ access_token: string; team_id?: string; user_id: string }>;
