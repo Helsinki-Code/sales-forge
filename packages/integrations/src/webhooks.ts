@@ -7,6 +7,12 @@ export function verifyHmacSha256(body: string | Buffer, provided: string, secret
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+export function verifyVercelSignature(body:string|Buffer,provided:string,secret:string):boolean{
+  const expected=createHmac("sha1",secret).update(body).digest("hex");
+  const a=Buffer.from(expected);const b=Buffer.from(provided);
+  return a.length===b.length&&timingSafeEqual(a,b);
+}
+
 export function eventIdempotencyKey(provider: string, deliveryId: string) {
   if (!provider || !deliveryId) throw new Error("Provider and delivery ID are required");
   return `${provider}:${deliveryId}`;

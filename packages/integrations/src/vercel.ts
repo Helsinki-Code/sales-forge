@@ -1,8 +1,10 @@
 export function vercelAuthorizationUrl(state: string, redirectUri: string) {
   const clientId = process.env.VERCEL_CLIENT_ID;
+  const slug = process.env.VERCEL_INTEGRATION_SLUG;
   if (!clientId) throw new Error("VERCEL_CLIENT_ID is required");
+  if (!slug) throw new Error("VERCEL_INTEGRATION_SLUG is required");
   const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, state });
-  return `https://vercel.com/integrations/seoforge/new?${params}`;
+  return `https://vercel.com/integrations/${encodeURIComponent(slug)}/new?${params}`;
 }
 
 export async function exchangeVercelCode(code: string, redirectUri: string) {
