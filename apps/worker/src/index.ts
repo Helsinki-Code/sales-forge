@@ -1,6 +1,7 @@
 import { Worker, Queue } from "bullmq";
 import { createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleAuth } from "google-auth-library";
 import { calculateHealthScore, decryptSecret, redactSecrets, sha256, type AgentRole, type EncryptedSecret, type HealthCategory } from "@seoforge/core";
 import { auditPage, DataForSeoClient, findingsFromSnapshot, inspectDiscoveryFiles } from "@seoforge/seo-geo";
 import { FULL_AUDIT_ROLES, generateImage, generateNarration, generateRepositoryPatch, generateShortVideo, profileBrand, runAgentTeam } from "@seoforge/agent-runtime";
@@ -11,8 +12,9 @@ const redisUrl = new URL(process.env.REDIS_URL);
 const connection = { host:redisUrl.hostname, port:Number(redisUrl.port||6379), username:redisUrl.username||undefined, password:redisUrl.password||undefined, tls:redisUrl.protocol==="rediss:"?{}:undefined };
 const queue = new Queue("seoforge-agent-runs",{connection});
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
+const googleAuth = new GoogleAuth();
 
-async function executeRunner(input:unknown){const url=process.env.RUNNER_URL;const secret=process.env.RUNNER_SHARED_SECRET;if(!url||!secret)throw new Error("Isolated runner service is not configured");const body=JSON.stringify(input);const signature=createHmac("sha256",secret).update(body).digest("hex");const response=await fetch(`${url.replace(/\/$/,"")}/v1/jobs`,{method:"POST",headers:{"content-type":"application/json","x-seoforge-signature":signature},body,signal:AbortSignal.timeout(900_000)});const result=await response.json() as any;if(!response.ok)throw new Error(result.error||`Runner HTTP ${response.status}`);return result.data;}
+async function executeRunner(input:unknown){const url=process.env.RUNNER_URL;const secret=process.env.RUNNER_SHARED_SECRET;if(!url||!secret)throw new Error("Isolated runner service is not configured");const body=JSON.stringify(input);const signature=createHmac("sha256",secret).update(body).digest("hex");const headers:Record<string,string>={"content-type":"application/json","x-seoforge-signature":signature};if(process.env.RUNNER_GOOGLE_AUTH==="true"){const audience=new URL(url).origin;const client=await googleAuth.getIdTokenClient(audience);const identityHeaders=await client.getRequestHeaders();const authorization=identityHeaders.get("authorization");if(!authorization)throw new Error("Cloud Run identity token could not be created");headers.authorization=authorization;}const response=await fetch(`${url.replace(/\/$/,"")}/v1/jobs`,{method:"POST",headers,body,signal:AbortSignal.timeout(900_000)});const result=await response.json() as any;if(!response.ok)throw new Error(result.error||`Runner HTTP ${response.status}`);return result.data;}
 
 async function captureEvidence(siteId:string,runId:string,snapshot:any,kind="crawl"){
   const {data,error}=await db.from("evidence_snapshots").insert({site_id:siteId,run_id:runId,kind,source_url:snapshot.url,captured_at:snapshot.capturedAt||new Date().toISOString(),summary:`HTTP ${snapshot.status}; ${snapshot.bytes} bytes`,content_hash:snapshot.contentHash,payload:{status:snapshot.status,title:snapshot.title,canonical:snapshot.canonical,h1:snapshot.h1}}).select().single();
