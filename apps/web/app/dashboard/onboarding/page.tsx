@@ -1,0 +1,2 @@
+import { PageHeader } from "@/components/page-header";import { OnboardingForm } from "@/components/onboarding-form";
+export default async function Page({searchParams}:{searchParams:Promise<{installationId?:string}>}){const query=await searchParams;return <><PageHeader title="Connect a site" description="Authorize only the repository and deployment path this autonomous team may work with."/><OnboardingForm initialInstallationId={query.installationId}/></>}

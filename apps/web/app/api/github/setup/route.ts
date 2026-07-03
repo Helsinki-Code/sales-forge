@@ -1,0 +1,1 @@
+export async function GET(request:Request){const url=new URL(request.url);const installation=url.searchParams.get("installation_id")||"";const target=new URL("/dashboard/onboarding",url);if(installation)target.searchParams.set("installationId",installation);return Response.redirect(target);}

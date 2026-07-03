@@ -1,0 +1,2 @@
+import{requireApiAccess}from"@/lib/api-access";import{apiError,ok}from"@/lib/api-response";
+export async function GET(){try{const{workspace,supabase}=await requireApiAccess("sites:read");const{data,error}=await supabase.from("provider_connections").select("provider,label,status,last_verified_at,updated_at").eq("workspace_id",workspace.workspace_id).order("provider");if(error)throw error;return ok(data)}catch(error){return apiError(error)}}

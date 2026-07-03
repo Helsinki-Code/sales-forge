@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+coverage
+.env*
+!.env.example
+*.pem
+*.key
+*.log
+.DS_Store
+.turbo
+*.tsbuildinfo
+.vercel
+.seo-cache
+tmp

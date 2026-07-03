@@ -1,0 +1,6 @@
+import { sha256 } from "@seoforge/core";
+import { eventIdempotencyKey, verifyHmacSha256 } from "@seoforge/integrations";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { agentQueue } from "@/lib/queue";
+import { apiError, ok } from "@/lib/api-response";
+export async function POST(request:Request){try{const raw=await request.text();const sig=request.headers.get("x-hub-signature-256")||"";const secret=process.env.GITHUB_WEBHOOK_SECRET;if(!secret||!verifyHmacSha256(raw,sig,secret))throw new Error("Invalid GitHub webhook signature");const delivery=request.headers.get("x-github-delivery")||"";const event=request.headers.get("x-github-event")||"unknown";const id=eventIdempotencyKey("github",delivery);const admin=createSupabaseAdminClient();const {error}=await admin.from("webhook_events").insert({id,provider:"github",event_type:event,payload_hash:sha256(raw)});if(error?.code==="23505")return ok({duplicate:true});const payload=JSON.parse(raw);if(event==="push"&&payload.ref===`refs/heads/${payload.repository?.default_branch}`){await agentQueue().add("repository-push",{owner:payload.repository?.owner?.login,name:payload.repository?.name,sha:payload.after},{jobId:id});}await admin.from("webhook_events").update({processed_at:new Date().toISOString()}).eq("id",id);return ok({received:true});}catch(error){return apiError(error);}}

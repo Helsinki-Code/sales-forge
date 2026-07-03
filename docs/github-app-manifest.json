@@ -1,0 +1,18 @@
+{
+  "name": "SEOForge",
+  "url": "https://YOUR_APP_DOMAIN",
+  "hook_attributes": { "url": "https://YOUR_APP_DOMAIN/api/webhooks/github", "active": true },
+  "redirect_url": "https://YOUR_APP_DOMAIN/api/github/setup",
+  "setup_url": "https://YOUR_APP_DOMAIN/api/github/setup",
+  "setup_on_update": true,
+  "public": true,
+  "default_permissions": {
+    "contents": "write",
+    "metadata": "read",
+    "pull_requests": "write",
+    "checks": "read",
+    "actions": "read",
+    "deployments": "read"
+  },
+  "default_events": ["push", "pull_request", "check_run", "check_suite", "deployment", "deployment_status", "installation", "installation_repositories"]
+}

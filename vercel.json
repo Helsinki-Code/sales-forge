@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm install --include=dev",
+  "buildCommand": "npm run build -w @seoforge/core && npm run build -w @seoforge/seo-geo && npm run build -w @seoforge/integrations && npm run build -w @seoforge/agent-runtime && npm run build -w @seoforge/web"
+}

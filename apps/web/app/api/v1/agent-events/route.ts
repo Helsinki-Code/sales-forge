@@ -1,0 +1,2 @@
+import{requireApiAccess}from"@/lib/api-access";import{apiError,ok}from"@/lib/api-response";
+export async function GET(){try{const{workspace,supabase,principal}=await requireApiAccess("runs:read");let query=supabase.from("agent_events").select("*,sites!inner(name,workspace_id)").eq("sites.workspace_id",workspace.workspace_id);if(principal?.siteIds?.length)query=query.in("site_id",principal.siteIds);const{data,error}=await query.order("created_at",{ascending:false}).limit(100);if(error)throw error;return ok(data)}catch(error){return apiError(error)}}

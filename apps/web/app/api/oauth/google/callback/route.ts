@@ -1,0 +1,5 @@
+import { encryptSecret } from "@seoforge/core";
+import { exchangeGoogleCode } from "@seoforge/integrations";
+import { apiUser } from "@/lib/auth";
+import { requireWorkspace } from "@/lib/workspace";
+export async function GET(request:Request){const auth=await apiUser();if(!auth)return Response.redirect(new URL("/login",request.url));const workspace=await requireWorkspace(auth.supabase,auth.user,"admin");const code=new URL(request.url).searchParams.get("code");if(!code)return Response.redirect(new URL("/dashboard/providers?error=google",request.url));const tokens=await exchangeGoogleCode(code);const label="Google Search & Analytics";await auth.supabase.from("provider_connections").upsert({workspace_id:workspace.workspace_id,provider:"google",label,encrypted_credentials:encryptSecret(tokens,`${workspace.workspace_id}:google:${label}`),scopes:tokens.scope.split(" "),status:"active",last_verified_at:new Date().toISOString()},{onConflict:"workspace_id,provider,label"});return Response.redirect(new URL("/dashboard/providers?connected=google",request.url));}

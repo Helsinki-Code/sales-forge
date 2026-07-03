@@ -1,0 +1,2 @@
+-- Development-only starter entitlement. Replace the auth user UUID before running.
+-- select public.create_workspace('Demo Workspace','demo-workspace');

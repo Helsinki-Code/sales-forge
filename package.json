@@ -1,0 +1,26 @@
+{
+  "name": "seoforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Autonomous, human-gated SEO/GEO agent platform",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @seoforge/web",
+    "dev:web": "npm run dev -w @seoforge/web",
+    "dev:worker": "npm run dev -w @seoforge/worker",
+    "dev:runner": "npm run dev -w @seoforge/runner-service",
+    "build:packages": "npm run build -w @seoforge/core && npm run build -w @seoforge/seo-geo && npm run build -w @seoforge/integrations && npm run build -w @seoforge/agent-runtime && npm run build -w @seoforge/repo-runner && npm run build -w @seoforge/sdk",
+    "build": "npm run build:packages && npm run build -w @seoforge/web && npm run build -w @seoforge/worker && npm run build -w @seoforge/runner-service && npm run build -w @seoforge/cli && npm run build -w @seoforge/mcp",
+    "typecheck": "npm run build:packages && npm run typecheck -w @seoforge/web && npm run typecheck -w @seoforge/worker && npm run typecheck -w @seoforge/runner-service && npm run typecheck -w @seoforge/cli && npm run typecheck -w @seoforge/mcp",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "engines": { "node": ">=20" },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "overrides": { "next@16.2.10": { "postcss": "8.5.10" } }
+}

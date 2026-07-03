@@ -1,0 +1,7 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { createServer } from "node:http";
+import { runRepositoryJob } from "@seoforge/repo-runner";
+
+const secret=process.env.RUNNER_SHARED_SECRET;if(!secret||secret.length<32)throw new Error("RUNNER_SHARED_SECRET must contain at least 32 characters");
+const server=createServer(async(request,response)=>{if(request.method!=="POST"||request.url!=="/v1/jobs"){response.writeHead(404).end();return;}const chunks:Buffer[]=[];let size=0;for await(const chunk of request){size+=chunk.length;if(size>10_000_000){response.writeHead(413).end();return;}chunks.push(chunk);}const body=Buffer.concat(chunks);const provided=request.headers["x-seoforge-signature"]||"";const expected=createHmac("sha256",secret).update(body).digest("hex");const a=Buffer.from(String(provided));const b=Buffer.from(expected);if(a.length!==b.length||!timingSafeEqual(a,b)){response.writeHead(401).end();return;}try{const result=await runRepositoryJob(JSON.parse(body.toString("utf8")));response.writeHead(200,{"content-type":"application/json"}).end(JSON.stringify({data:result}));}catch(error){response.writeHead(422,{"content-type":"application/json"}).end(JSON.stringify({error:error instanceof Error?error.message:"Runner failed"}));}});
+server.listen(Number(process.env.PORT||8080),"0.0.0.0",()=>console.log(JSON.stringify({event:"runner.ready",port:Number(process.env.PORT||8080)})));

@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info: {title: SEOForge API, version: 1.0.0, description: Evidence-led SEO/GEO operations. Approval, merge and deployment are UI-only.}
+servers:
+  - {url: https://app.seoforge.ai/api/v1, description: live}
+  - {url: https://test.seoforge.ai/api/v1, description: isolated test}
+security: [{bearerAuth: []}]
+components:
+  securitySchemes: {bearerAuth: {type: http, scheme: bearer}}
+  schemas:
+    RunRequest:
+      type: object
+      required: [siteId, kind]
+      properties: {siteId: {type: string, format: uuid}, kind: {type: string}, dryRun: {type: boolean, default: true}, roles: {type: array, items: {type: string}}}
+paths:
+  /sites: {get: {operationId: listSites, responses: {'200': {description: Authorized sites}}}}
+  /runs:
+    get: {operationId: listRuns, responses: {'200': {description: Durable agent runs}}}
+    post: {operationId: createRun, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RunRequest'}}}}, responses: {'201': {description: Queued}}}
+  /audits: {post: {operationId: createAudit, responses: {'201': {description: Queued evidence audit}}}}
+  /findings: {get: {operationId: listFindings, responses: {'200': {description: Evidence-backed findings}}}}
+  /proposals: {get: {operationId: listProposals, responses: {'200': {description: Human-reviewed proposals}}}}
+  /experiments: {get: {operationId: listExperiments, responses: {'200': {description: Measured experiments}}}}
+  /rankings: {get: {operationId: listRankings, parameters: [{in: query, name: siteId, schema: {type: string, format: uuid}}], responses: {'200': {description: Measured rank observations}}}}
+  /agent-events: {get: {operationId: listAgentEvents, responses: {'200': {description: Structured execution summaries}}}}
+  /usage: {get: {operationId: listUsage, responses: {'200': {description: Immutable usage ledger}}}}

@@ -1,0 +1,22 @@
+name = "seoforge-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-07-03"
+
+[vars]
+ENVIRONMENT = "live"
+API_ORIGIN = "https://app.seoforge.ai"
+AUTHORIZATION_SERVER = "https://app.seoforge.ai"
+
+[[routes]]
+pattern = "mcp.seoforge.ai/*"
+zone_name = "seoforge.ai"
+
+[env.test]
+name = "seoforge-mcp-test"
+vars = { ENVIRONMENT = "test", API_ORIGIN = "https://test.seoforge.ai", AUTHORIZATION_SERVER = "https://test.seoforge.ai" }
+routes = [{ pattern = "mcp.test.seoforge.ai/*", zone_name = "seoforge.ai" }]
+
+[env.production]
+name = "seoforge-mcp"
+vars = { ENVIRONMENT = "live", API_ORIGIN = "https://app.seoforge.ai", AUTHORIZATION_SERVER = "https://app.seoforge.ai" }
+routes = [{ pattern = "mcp.seoforge.ai/*", zone_name = "seoforge.ai" }]
