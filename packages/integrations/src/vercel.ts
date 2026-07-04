@@ -1,9 +1,11 @@
-export function vercelAuthorizationUrl(state: string, redirectUri: string) {
-  const clientId = process.env.SEOFORGE_VERCEL_CLIENT_ID;
+export function vercelAuthorizationUrl(state: string, _redirectUri?: string) {
   const slug = process.env.SEOFORGE_VERCEL_INTEGRATION_SLUG;
-  if (!clientId) throw new Error("SEOFORGE_VERCEL_CLIENT_ID is required");
   if (!slug) throw new Error("SEOFORGE_VERCEL_INTEGRATION_SLUG is required");
-  const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, state });
+
+  // Vercel resolves the client and callback from the registered integration
+  // slug. The external installation URL accepts state; client_id and
+  // redirect_uri belong only to the subsequent access-token exchange.
+  const params = new URLSearchParams({ state });
   return `https://vercel.com/integrations/${encodeURIComponent(slug)}/new?${params}`;
 }
 
