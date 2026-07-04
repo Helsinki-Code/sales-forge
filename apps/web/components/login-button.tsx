@@ -7,6 +7,6 @@ export function LoginButton() {
   return <button className="button primary" style={{width:"100%"}} disabled={loading} onClick={async () => {
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signInWithOAuth({ provider: "github", options: { redirectTo: `${location.origin}/auth/callback`, scopes: "read:user user:email repo" } });
+    await supabase.auth.signInWithOAuth({ provider: "github", options: { redirectTo: `${location.origin}/auth/callback`, scopes: "read:user user:email" } });
   }}>{loading ? "Redirecting…" : "Continue with GitHub"}</button>;
 }

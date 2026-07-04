@@ -58,9 +58,9 @@ Create the App from [`docs/github-app-manifest.json`](docs/github-app-manifest.j
 
 Create recurring Prices for Starter, Pro, and Agency. Put quota dimensions in Price metadata (`sites`, `trackedQueries`, `crawlPages`, `agentRuns`, `images`, `audioSeconds`, `videoSeconds`, `storageBytes`, and `concurrency`) and `planKey` in each Price. Set the IDs in the environment. The app uses Stripe Billing, Checkout Sessions, and Customer Portal—not manual PaymentIntent renewals.
 
-### Vercel
+### Deployment and customer publishing
 
-Deploy the web app with the repository root as project root. The worker and isolated runner must run as separate persistent containers on private networking. The runner receives only a signed job and short-lived installation token; it must not receive Supabase, Stripe, Gemini, or provider credentials. Customer websites can connect through Vercel OAuth or a protected GitHub Actions workflow.
+Deploy the web app with the repository root as project root. The worker and isolated runner must run as separate persistent containers on private networking. The runner receives only a signed job and short-lived installation token; it must not receive Supabase, Stripe, Gemini, or provider credentials. Customer sites choose either a protected GitHub pull-request workflow or an encrypted WordPress REST API connection.
 
 ## Commands
 

@@ -80,11 +80,21 @@ export const siteCreateSchema = z.object({
   workspaceId: idSchema,
   name: z.string().min(2).max(100),
   url: urlSchema,
-  repositoryOwner: z.string().min(1).max(100),
-  repositoryName: z.string().min(1).max(100),
-  defaultBranch: z.string().min(1).max(255).default("main"),
-  githubInstallationId: z.coerce.number().int().positive(),
-  deploymentProvider: z.enum(["vercel", "github_actions"]),
+  publishingTarget: z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("github"),
+      repositoryOwner: z.string().min(1).max(100),
+      repositoryName: z.string().min(1).max(100),
+      defaultBranch: z.string().min(1).max(255).default("main"),
+      githubInstallationId: z.coerce.number().int().positive(),
+    }),
+    z.object({
+      type: z.literal("wordpress"),
+      apiUrl: urlSchema,
+      username: z.string().min(1).max(200),
+      applicationPassword: z.string().min(8).max(1000),
+    }),
+  ]),
 });
 
 export const runCreateSchema = z.object({
@@ -96,7 +106,7 @@ export const runCreateSchema = z.object({
 
 export const providerConnectionSchema = z.object({
   workspaceId: idSchema,
-  provider: z.enum(["dataforseo", "google", "bing", "vercel", "github"]),
+  provider: z.enum(["dataforseo", "google", "bing", "github", "wordpress"]),
   label: z.string().min(1).max(100),
   credentials: z.record(z.string(), z.string().max(10000)),
 });

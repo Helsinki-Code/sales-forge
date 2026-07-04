@@ -1,5 +1,5 @@
-import { encryptSecret, hasScope, type ApiScope } from "@seoforge/core";
-import { providerConnectionSchema, runCreateSchema, siteCreateSchema } from "@seoforge/core";
+import { encryptSecret, hasScope, providerConnectionSchema, runCreateSchema, siteCreateSchema, type ApiScope } from "@seoforge/core";
+import { verifyWordPressConnection } from "@seoforge/integrations";
 import { apiUser } from "@/lib/auth";
 import { apiError, created, ok } from "@/lib/api-response";
 import { agentQueue } from "@/lib/queue";
@@ -44,12 +44,25 @@ export async function POST(request: Request, context: { params: Promise<{ resour
     const body = await request.json();
     if (resource === "sites") {
       const input = siteCreateSchema.parse({ ...body, workspaceId: workspace.workspace_id });
+      const target = input.publishingTarget;
+      const wordpress = target.type === "wordpress" ? await verifyWordPressConnection(target) : null;
       const { data, error } = await auth.supabase.from("sites").insert({
-        workspace_id: input.workspaceId, name: input.name, url: input.url, repository_owner: input.repositoryOwner,
-        repository_name: input.repositoryName, default_branch: input.defaultBranch, github_installation_id: input.githubInstallationId,
-        deployment_provider: input.deploymentProvider, site_type:body.siteType||"other", readiness:{ready:false,checks:{repositoryPermission:true,ownership:false,providers:false,branchProtection:false,validation:false}}, settings: { autonomousProposals: false, agentConcurrency: 3 },
+        workspace_id: input.workspaceId, name: input.name, url: input.url, publishing_target: target.type,
+        repository_owner: target.type === "github" ? target.repositoryOwner : null,
+        repository_name: target.type === "github" ? target.repositoryName : null,
+        default_branch: target.type === "github" ? target.defaultBranch : "main",
+        github_installation_id: target.type === "github" ? target.githubInstallationId : null,
+        deployment_provider: target.type === "github" ? "github_actions" : null,
+        site_type:body.siteType||"other", readiness:{ready:false,checks:{publishingAccess:true,ownership:false,providers:false,validation:false}}, settings: { autonomousProposals: false, agentConcurrency: 3 },
       }).select().single();
-      if (error) throw error;const keywords=Array.isArray(body.initialKeywords)?body.initialKeywords.slice(0,100).filter((x:unknown)=>typeof x==="string"&&x.trim()):[];if(keywords.length)await auth.supabase.from("tracked_queries").insert(keywords.map((query:string,index:number)=>({site_id:data.id,query:query.trim(),priority:index<10?1:3})));const competitors=Array.isArray(body.competitors)?body.competitors.slice(0,50).filter((x:unknown)=>typeof x==="string"&&x.trim()):[];if(competitors.length)await auth.supabase.from("competitors").insert(competitors.map((domain:string)=>({site_id:data.id,domain:domain.replace(/^https?:\/\//,"").replace(/\/$/,"")})));return created(data);
+      if (error) throw error;
+      if (target.type === "wordpress") {
+        const label = `WordPress · ${wordpress?.name}`;
+        const encrypted = encryptSecret(target, `${workspace.workspace_id}:wordpress:${label}`);
+        const { error: connectionError } = await auth.supabase.from("provider_connections").insert({workspace_id:workspace.workspace_id,site_id:data.id,provider:"wordpress",label,encrypted_credentials:encrypted,scopes:["posts:read","posts:write","media:write"],status:"active",last_verified_at:new Date().toISOString()});
+        if (connectionError) { await auth.supabase.from("sites").delete().eq("id", data.id); throw connectionError; }
+      }
+      const keywords=Array.isArray(body.initialKeywords)?body.initialKeywords.slice(0,100).filter((x:unknown)=>typeof x==="string"&&x.trim()):[];if(keywords.length)await auth.supabase.from("tracked_queries").insert(keywords.map((query:string,index:number)=>({site_id:data.id,query:query.trim(),priority:index<10?1:3})));const competitors=Array.isArray(body.competitors)?body.competitors.slice(0,50).filter((x:unknown)=>typeof x==="string"&&x.trim()):[];if(competitors.length)await auth.supabase.from("competitors").insert(competitors.map((domain:string)=>({site_id:data.id,domain:domain.replace(/^https?:\/\//,"").replace(/\/$/,"")})));return created(data);
     }
     if (resource === "providers") {
       const input = providerConnectionSchema.parse({ ...body, workspaceId: workspace.workspace_id });

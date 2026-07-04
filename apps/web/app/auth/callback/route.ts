@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { encryptSecret } from "@seoforge/core";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { TRIAL_ENTITLEMENTS } from "@seoforge/integrations";
@@ -17,13 +16,6 @@ export async function GET(request: Request) {
     const { data: workspace, error: workspaceError } = await supabase.rpc("create_workspace", { workspace_name: `${data.user.user_metadata.user_name || "My"} Workspace`, workspace_slug: `${base}-${data.user.id.slice(0,6)}` });
     if (workspaceError) return NextResponse.redirect(new URL("/login?error=workspace", url));
     membership = { workspace_id: workspace.id };
-  }
-  if (data.session.provider_token && membership) {
-    const aad = `${membership.workspace_id}:github:oauth`;
-    await supabase.from("provider_connections").upsert({
-      workspace_id: membership.workspace_id, provider: "github", label: "GitHub OAuth",
-      encrypted_credentials: encryptSecret({ token: data.session.provider_token }, aad), scopes: ["repo"], status: "active", last_verified_at: new Date().toISOString(),
-    }, { onConflict: "workspace_id,provider,label" });
   }
   if (membership) {
     await createSupabaseAdminClient().from("subscriptions").upsert({ workspace_id:membership.workspace_id, plan_key:"trial", status:"trialing", entitlements:TRIAL_ENTITLEMENTS }, { onConflict:"workspace_id", ignoreDuplicates:true });

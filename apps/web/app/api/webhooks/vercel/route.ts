@@ -1,6 +1,0 @@
-import { sha256 } from "@seoforge/core";
-import { eventIdempotencyKey, verifyVercelSignature } from "@seoforge/integrations";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { agentQueue } from "@/lib/queue";
-import { apiError, ok } from "@/lib/api-response";
-export async function POST(request:Request){try{const raw=await request.text();const signature=request.headers.get("x-vercel-signature")||"";const secret=process.env.SEOFORGE_VERCEL_WEBHOOK_SECRET;if(!secret||!verifyVercelSignature(raw,signature,secret))throw new Error("Invalid Vercel webhook signature");const payload=JSON.parse(raw);const delivery=payload.id||sha256(raw);const id=eventIdempotencyKey("vercel",delivery);const admin=createSupabaseAdminClient();const {error}=await admin.from("webhook_events").insert({id,provider:"vercel",event_type:payload.type||"unknown",payload_hash:sha256(raw)});if(error?.code==="23505")return ok({duplicate:true});if(payload.type==="deployment.succeeded")await agentQueue().add("post-deploy",{deployment:payload.payload},{jobId:id});await admin.from("webhook_events").update({processed_at:new Date().toISOString()}).eq("id",id);return ok({received:true});}catch(error){return apiError(error);}}
